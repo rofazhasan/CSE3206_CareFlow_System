@@ -27,10 +27,14 @@ class BillingService:
         self,
         appointment_id: str,
         strategy: Optional[IBillingStrategy] = None,
+        notes: str = "",
     ) -> Invoice:
+        """Generate invoice with mandatory base fee validation and audit notes."""
         appt = self.appointment_repo.get_by_id(appointment_id)
         if not appt:
             raise ValueError(f"Appointment '{appointment_id}' does not exist.")
+        if appt.fee < 100.0:
+            raise ValueError("Base consultation fee cannot be below clinic minimum 100 BDT.")
 
         existing = self.billing_repo.get_by_appointment_id(appointment_id)
         if existing:
