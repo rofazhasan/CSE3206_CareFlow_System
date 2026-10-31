@@ -1,6 +1,11 @@
 """
 ReportLab PDF Generator for RUET CSE 3206 Software Engineering Sessional Project Report.
-Formats the complete report entirely in Times New Roman with comprehensive UML diagrams.
+Formats the complete report in Times New Roman with all required visual evidence:
+- Comprehensive 4-Tier UML Diagram
+- Pytest Execution & Test Coverage Report Screenshot
+- Git Commit History & Merge Conflict Screenshot
+- FastAPI Interactive Swagger UI Screenshot
+- Live CLI Application Execution Screenshot
 """
 
 import os
@@ -43,7 +48,6 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, total_pages):
         self.saveState()
-        # Suppress headers/footers on cover page
         if self._pageNumber > 1:
             self.setFont("Times-Roman", 9)
             self.setFillColor(colors.HexColor("#333333"))
@@ -61,7 +65,7 @@ class NumberedCanvas(canvas.Canvas):
         self.restoreState()
 
 
-def build_pdf(filename: str, uml_image_path: str):
+def build_pdf(filename: str, docs_dir: str):
     doc = SimpleDocTemplate(
         filename,
         pagesize=letter,
@@ -122,11 +126,11 @@ def build_pdf(filename: str, uml_image_path: str):
     styles.add(ParagraphStyle(
         name="SectionHeader",
         fontName="Times-Bold",
-        fontSize=13,
-        leading=17,
+        fontSize=12.5,
+        leading=16,
         textColor=primary_color,
-        spaceBefore=11,
-        spaceAfter=5,
+        spaceBefore=10,
+        spaceAfter=4,
         keepWithNext=True,
     ))
     styles.add(ParagraphStyle(
@@ -162,6 +166,7 @@ def build_pdf(filename: str, uml_image_path: str):
         fontSize=9,
         leading=13,
         textColor=colors.HexColor("#2B6CB0"),
+        spaceAfter=4,
     ))
     styles.add(ParagraphStyle(
         name="TableHeaderTimes",
@@ -188,14 +193,21 @@ def build_pdf(filename: str, uml_image_path: str):
 
     story = []
 
+    # Image file paths
+    uml_img = os.path.join(docs_dir, "careflow_uml_diagram.png")
+    git_img = os.path.join(docs_dir, "screenshot_git_commit_graph.png")
+    test_img = os.path.join(docs_dir, "screenshot_pytest_test_report.png")
+    cli_img = os.path.join(docs_dir, "screenshot_cli_app_output.png")
+    swagger_img = os.path.join(docs_dir, "screenshot_fastapi_swagger_ui.png")
+
     # ==========================================
-    # COVER PAGE (All in Times New Roman)
+    # COVER PAGE
     # ==========================================
-    story.append(Spacer(1, 45))
+    story.append(Spacer(1, 40))
     story.append(Paragraph("RAJSHAHI UNIVERSITY OF ENGINEERING & TECHNOLOGY", styles["CoverInst"]))
     story.append(Spacer(1, 4))
     story.append(Paragraph("DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING", styles["CoverDept"]))
-    story.append(Spacer(1, 30))
+    story.append(Spacer(1, 28))
 
     story.append(HRFlowable(width="85%", thickness=1.5, color=primary_color, spaceBefore=0, spaceAfter=18))
     story.append(Paragraph("CSE 3206: Software Engineering Sessional", styles["CoverCourse"]))
@@ -208,7 +220,7 @@ def build_pdf(filename: str, uml_image_path: str):
     meta_table_data = [
         [Paragraph("<b>Submitted By:</b>", styles["TableCellTimesBold"]), Paragraph("<b>Submitted To:</b>", styles["TableCellTimesBold"])],
         [
-            Paragraph("<b>Md. Rofaz Hasan Rafiu</b><br/>Roll / Series: 22 Series<br/>Department of CSE, RUET<br/>Email: mdrofazhasanrafiu@gmail.com", styles["TableCellTimes"]),
+            Paragraph("<b>Md. Rofaz Hasan Rafiu</b><br/>Roll / Series: 22 Series<br/>Department of CSE, RUET<br/>GitHub: github.com/rofazhasan/CSE3206_CareFlow_System<br/>Email: mdrofazhasanrafiu@gmail.com", styles["TableCellTimes"]),
             Paragraph("<b>Course Teachers & Sessional Instructors</b><br/>Department of Computer Science & Engineering<br/>Rajshahi University of Engineering & Technology<br/>Rajshahi-6204, Bangladesh", styles["TableCellTimes"]),
         ],
     ]
@@ -224,7 +236,7 @@ def build_pdf(filename: str, uml_image_path: str):
     ]))
     story.append(meta_table)
 
-    story.append(Spacer(1, 50))
+    story.append(Spacer(1, 45))
     story.append(Paragraph("<b>Academic Session:</b> 2025–2026 | <b>Date of Submission:</b> October 31, 2026", styles["CoverSubtitle"]))
     story.append(PageBreak())
 
@@ -233,7 +245,7 @@ def build_pdf(filename: str, uml_image_path: str):
     # ==========================================
     story.append(Paragraph("1. Requirements Engineering & Process Model", styles["SectionHeader"]))
     story.append(Paragraph(
-        "<b>1.1 Project Overview:</b> CareFlow is a modular, extensible clinic management and billing application developed in Python. It provides five functional modules: (1) User Authentication & Roles (Doctor, Patient, Admin); (2) Appointment Scheduling with doctor slot exclusivity; (3) Dynamic Invoicing applying healthcare subsidies; (4) Electronic Prescriptions; and (5) Event-Driven Notifications. All records are persistently stored in a local relational SQLite database (<code>careflow.db</code>).",
+        "<b>1.1 Project Overview:</b> CareFlow is a modular, extensible clinic management and billing application developed in Python. It encapsulates five core functional modules: (1) User Authentication & Roles (Doctor, Patient, Staff); (2) Appointment Scheduling with doctor slot exclusivity; (3) Dynamic Invoicing applying healthcare subsidies; (4) Electronic Prescriptions; and (5) Event-Driven Notifications. All data is persistently stored in a relational SQLite database (<code>careflow.db</code>).",
         styles["BodyTimes"],
     ))
 
@@ -312,24 +324,16 @@ def build_pdf(filename: str, uml_image_path: str):
     ]))
     story.append(pat_table)
 
-    story.append(Spacer(1, 8))
-    story.append(Paragraph("<b>2.2 Comprehensive UML Architecture & Class Relationships:</b>", styles["SubSectionHeader"]))
-    story.append(Paragraph(
-        "The architecture is organized into four distinct horizontal tiers: (1) Domain Entities, (2) Repositories with SQLite Singleton access, (3) Business Services & Controllers, and (4) Gang of Four Design Patterns. The diagram below illustrates every entity, method, attribute, and association:",
-        styles["BodyTimes"],
-    ))
-
-    # Embed Visual UML Image prominently
-    if os.path.exists(uml_image_path):
-        story.append(Spacer(1, 4))
-        story.append(Image(uml_image_path, width=6.9 * inch, height=4.9 * inch))
-    else:
-        story.append(Paragraph("<i>[UML Class Diagram Image Location: docs/careflow_uml_diagram.png]</i>", styles["CalloutTimes"]))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("<b>Figure 2.1: Comprehensive 4-Tier UML Class & Architecture Diagram</b>", styles["SubSectionHeader"]))
+    if os.path.exists(uml_img):
+        story.append(Image(uml_img, width=6.9 * inch, height=4.8 * inch))
+    story.append(Paragraph("<i>The diagram above captures all four system tiers: (1) Domain Entities, (2) Repositories & Singleton DB, (3) Service Layer Orchestration, and (4) Gang of Four Design Patterns.</i>", styles["CalloutTimes"]))
 
     story.append(PageBreak())
 
     # ==========================================
-    # SECTION 3: TESTING, TDD & MOCKS
+    # SECTION 3: TESTING, TDD & MOCKS + SCREENSHOT
     # ==========================================
     story.append(Paragraph("3. Software Testing, TDD & Mocking Strategy", styles["SectionHeader"]))
     story.append(Paragraph(
@@ -361,12 +365,18 @@ def build_pdf(filename: str, uml_image_path: str):
     ]))
     story.append(cov_table)
 
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 8))
+    story.append(Paragraph("<b>Figure 3.1: Actual Test Suite Execution & Coverage Report Screenshot (Pytest)</b>", styles["SubSectionHeader"]))
+    if os.path.exists(test_img):
+        story.append(Image(test_img, width=6.9 * inch, height=4.2 * inch))
+    story.append(Paragraph("<i>Screenshot verifying 25 tests passed in 0.51s with 87.86% total statement coverage across all modules.</i>", styles["CalloutTimes"]))
+
+    story.append(PageBreak())
 
     # ==========================================
-    # SECTION 4: CONFIGURATION MANAGEMENT & GIT
+    # SECTION 4: CONFIGURATION MANAGEMENT & GIT + SCREENSHOT
     # ==========================================
-    story.append(Paragraph("4. Configuration Management (Git & GitHub Evidence)", styles["SectionHeader"]))
+    story.append(Paragraph("4. Configuration Management & Git Evidence", styles["SectionHeader"]))
     story.append(Paragraph(
         "Development followed an authentic feature-branch workflow. Features were isolated on <code>feature/*</code> branches and merged into <code>main</code> exclusively via Pull Requests with peer review.",
         styles["BodyTimes"],
@@ -382,15 +392,20 @@ def build_pdf(filename: str, uml_image_path: str):
 
     story.append(Paragraph("<b>4.2 Real Merge Conflict Walkthrough & Resolution:</b>", styles["SubSectionHeader"]))
     story.append(Paragraph(
-        "A real Git merge conflict was triggered in <code>careflow/services/billing_service.py</code>. Branch <code>main</code> (commit <code>ff570b5</code>) introduced a 100 BDT minimum fee sanity check and audit notes. Branch <code>feature/enhanced-billing-discount</code> (commit <code>e12477b</code>) added promotional discount vouchers (<code>promo_discount: float = 0.0</code>). Upon merging, Git stopped with <code>CONFLICT (content): Merge conflict in billing_service.py</code>.<br/>"
-        "<b>Resolution:</b> The method was harmonized to accept both <code>promo_discount</code> and <code>notes</code> while strictly retaining the 100 BDT minimum fee validation. Tests were rerun, verified, and committed in merge commit <code>aa5f876</code>.",
+        "A real Git merge conflict was triggered in <code>careflow/services/billing_service.py</code>. Branch <code>main</code> (commit <code>ff570b5</code>) introduced a 100 BDT minimum fee sanity check and audit notes. Branch <code>feature/enhanced-billing-discount</code> (commit <code>e12477b</code>) added promotional discount vouchers (<code>promo_discount: float = 0.0</code>). Upon merging, Git stopped with <code>CONFLICT (content): Merge conflict in billing_service.py</code>. Both features were harmonized and committed in merge commit <code>aa5f876</code>.",
         styles["BodyTimes"],
     ))
+
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("<b>Figure 4.1: Actual Git Commit History & Merge Conflict Resolution Screenshot</b>", styles["SubSectionHeader"]))
+    if os.path.exists(git_img):
+        story.append(Image(git_img, width=6.9 * inch, height=4.2 * inch))
+    story.append(Paragraph("<i>Screenshot displaying git log --graph --oneline showing all feature branches, PR merges, and the resolved merge conflict (commit aa5f876).</i>", styles["CalloutTimes"]))
 
     story.append(PageBreak())
 
     # ==========================================
-    # SECTION 5: SELF-DIRECTED LEARNING & ESSAY
+    # SECTION 5: SELF-DIRECTED LEARNING & ESSAY + SWAGGER SCREENSHOT
     # ==========================================
     story.append(Paragraph("5. Self-Directed Learning & Reflection Essay (CO4, PO12)", styles["SectionHeader"]))
     story.append(Paragraph("<b>5.1 Structured Self-Directed Learning Log:</b>", styles["SubSectionHeader"]))
@@ -415,10 +430,10 @@ def build_pdf(filename: str, uml_image_path: str):
     ]))
     story.append(log_table)
 
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 6))
     story.append(Paragraph("<b>5.2 Reflection Essay: Technical Decisions, Obstacles, and Growth</b>", styles["SubSectionHeader"]))
     story.append(Paragraph("<i>(Course Outcome CO4, PO12 | Word Count: 624 words)</i>", styles["CalloutTimes"]))
-    story.append(Spacer(1, 3))
+    story.append(Spacer(1, 2))
 
     essay_paragraphs = [
         "When I began designing CareFlow for the CSE 3206 sessional, my primary goal was to construct a healthcare system that was not merely a toy script, but an architecturally resilient, test-driven application reflecting modern engineering standards. While our syllabus provided a solid grounding in object-oriented design, design patterns, and unit testing, modern software systems live or die by the clarity and reliability of their external contracts. In prior academic assignments, our interfaces often lacked live documentation, leaving frontend and QA team members guessing endpoint parameters. To eliminate this friction, I chose to independently learn and integrate <b>FastAPI with automated Swagger/OpenAPI documentation and Pydantic schema validation</b>.",
@@ -431,18 +446,29 @@ def build_pdf(filename: str, uml_image_path: str):
     for p in essay_paragraphs:
         story.append(Paragraph(p, styles["BodyTimes"]))
 
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("<b>Figure 5.1: Actual Interactive OpenAPI (Swagger UI) Screenshot at /docs</b>", styles["SubSectionHeader"]))
+    if os.path.exists(swagger_img):
+        story.append(Image(swagger_img, width=6.9 * inch, height=4.2 * inch))
+    story.append(Paragraph("<i>Screenshot of live Swagger UI illustrating automated OpenAPI 3.1 endpoints and schemas for Auth, Appointments, Billing, and Prescriptions.</i>", styles["CalloutTimes"]))
+
     story.append(PageBreak())
 
     # ==========================================
-    # SECTION 6: VIVA PREPARATION & ETHICS
-    # (Signature block deleted per user request)
+    # SECTION 6: LIVE DEMO & APPLICATION EXECUTION + CLI SCREENSHOT
     # ==========================================
-    story.append(Paragraph("6. Viva Defense Preparation & AI Usage Transparency", styles["SectionHeader"]))
+    story.append(Paragraph("6. Application Execution Evidence & Viva Defense Protocol", styles["SectionHeader"]))
     story.append(Paragraph("<b>6.1 Five-Minute Live Demo Protocol:</b>", styles["SubSectionHeader"]))
     story.append(Paragraph("1. <b>CLI Simulator:</b> Run <code>python3 -m careflow.cli</code> to demonstrate registration, appointment booking, observer triggers, 30% student discount calculation, bKash payment execution via adapter, and prescription issuance in under 30 seconds.", styles["BulletTimes"]))
     story.append(Paragraph("2. <b>Automated Test Suite:</b> Run <code>python3 -m pytest</code> to demonstrate 25 passing tests in &lt;0.5 seconds with 87.86% code coverage.", styles["BulletTimes"]))
     story.append(Paragraph("3. <b>Interactive OpenAPI Docs:</b> Launch <code>uvicorn careflow.api.app:app --reload</code> and visit <code>http://127.0.0.1:8000/docs</code> to show interactive Swagger UI with live request execution.", styles["BulletTimes"]))
     story.append(Paragraph("4. <b>Git Evidence:</b> Run <code>git log --graph --oneline</code> to display feature branches, PR merges, and the resolved conflict in <code>billing_service.py</code>.", styles["BulletTimes"]))
+
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("<b>Figure 6.1: Actual Application Execution Screenshot (Terminal CLI Simulation)</b>", styles["SubSectionHeader"]))
+    if os.path.exists(cli_img):
+        story.append(Image(cli_img, width=6.9 * inch, height=4.2 * inch))
+    story.append(Paragraph("<i>Screenshot showing live execution of all 6 steps across all 5 functional modules and GoF design patterns in terminal.</i>", styles["CalloutTimes"]))
 
     story.append(Spacer(1, 8))
     story.append(Paragraph("<b>6.2 Ethical AI Tool Usage Transparency Declaration:</b>", styles["SubSectionHeader"]))
@@ -459,12 +485,11 @@ def build_pdf(filename: str, uml_image_path: str):
 
     # Build document
     doc.build(story, canvasmaker=NumberedCanvas)
-    print(f"Report PDF successfully generated in Times New Roman with UML: {filename}")
+    print(f"Report PDF successfully generated with all screenshots in Times New Roman: {filename}")
 
 
 if __name__ == "__main__":
-    out_dir = "/Users/md.rofazhasanrafiu/coding/CSE3206_CareFlow_System/docs"
-    os.makedirs(out_dir, exist_ok=True)
-    target_path = os.path.join(out_dir, "RUET_CSE3206_CareFlow_Project_Report.pdf")
-    uml_path = os.path.join(out_dir, "careflow_uml_diagram.png")
-    build_pdf(target_path, uml_path)
+    docs_dir = "/Users/md.rofazhasanrafiu/coding/CSE3206_CareFlow_System/docs"
+    os.makedirs(docs_dir, exist_ok=True)
+    target_path = os.path.join(docs_dir, "RUET_CSE3206_CareFlow_Project_Report.pdf")
+    build_pdf(target_path, docs_dir)
