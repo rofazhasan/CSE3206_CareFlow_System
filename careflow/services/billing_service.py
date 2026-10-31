@@ -27,7 +27,9 @@ class BillingService:
         self,
         appointment_id: str,
         strategy: Optional[IBillingStrategy] = None,
+        promo_discount: float = 0.0,
     ) -> Invoice:
+        """Generate invoice with optional promotional discount voucher."""
         appt = self.appointment_repo.get_by_id(appointment_id)
         if not appt:
             raise ValueError(f"Appointment '{appointment_id}' does not exist.")
@@ -38,12 +40,13 @@ class BillingService:
 
         calc_strategy = strategy or StandardBillingStrategy()
         calc = calc_strategy.compute(appt.fee)
+        total_discount = min(appt.fee, calc.discount_amount + promo_discount)
 
         invoice = Invoice(
             appointment_id=appointment_id,
             patient_id=appt.patient_id,
             base_amount=calc.base_amount,
-            discount_amount=calc.discount_amount,
+            discount_amount=total_discount,
             tax_amount=calc.tax_amount,
             status=PaymentStatus.UNPAID,
         )
