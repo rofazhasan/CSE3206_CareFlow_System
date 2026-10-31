@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "careflow-clinic-system"
+version = "1.0.0"
+description = "A Modular Clinic Appointment, Patient Records & Billing System built with Python, Design Patterns, and TDD"
+readme = "README.md"
+authors = [
+    { name = "Md. Rofaz Hasan Rafiu", email = "mdrofazhasanrafiu@gmail.com" }
+]
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v --cov=careflow --cov-report=term-missing --cov-report=html"
+
+[tool.coverage.run]
+source = ["careflow"]
+omit = [
+    "tests/*",
+    "careflow/cli.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+show_missing = true
+fail_under = 85
