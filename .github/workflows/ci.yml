@@ -1,0 +1,53 @@
+name: CareFlow CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-quality-gate:
+    name: Build, Test & Quality Gates
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install httpx flake8
+
+      - name: Code Linting with Flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 careflow tests --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. Max complexity 12
+          flake8 careflow tests --count --exit-zero --max-complexity=12 --max-line-length=120 --statistics
+
+      - name: Run Test Suite with Pytest & Coverage Threshold (>85%)
+        run: |
+          python -m pytest --cov=careflow --cov-report=term-missing --cov-report=xml --cov-fail-under=85
+
+      - name: Verify CLI Simulator Execution
+        run: |
+          python -m careflow.cli
+
+      - name: Upload Coverage Artifacts
+        uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.9'
+        with:
+          name: code-coverage-report
+          path: coverage.xml
