@@ -74,3 +74,4 @@ class MedicalRecordRepository:
                 )
             )
         return results
+

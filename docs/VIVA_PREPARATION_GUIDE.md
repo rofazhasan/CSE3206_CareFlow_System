@@ -1,4 +1,4 @@
-# CareFlow: Comprehensive Code Walkthrough & 35+ Viva Defense Master Guide
+# CareFlow: Complete Code Walkthrough & 35+ Viva Defense Master Guide
 **Student Name:** Md. Rofaz Hasan Rafiu | **Series:** 22 Series | **Course:** CSE 3206 Software Engineering Sessional  
 **Department of Computer Science & Engineering, Rajshahi University of Engineering & Technology (RUET)**
 
@@ -6,261 +6,159 @@
 
 ## 1. Quick Pitch & 5-Minute Live Demo Script
 
-When the teacher asks: *"Tell us about your project and show a live demo"*, deliver this structured, confident 90-second opening:
+When the teacher asks: *"Tell us about your project and show a live demo"*, deliver this calm, natural, and confident 60–90 second answer:
 
-> **Student Script:**  
-> *"Good morning, Sir. For my CSE 3206 sessional project, I designed and developed **CareFlow**, a modular clinic appointment and healthcare billing system built in Python adhering to the full Software Development Life Cycle (SDLC) under an Agile Scrum methodology.*
+> **Student Voice:**  
+> *"Good morning, Sir. For my CSE 3206 sessional project, I built **CareFlow**, a clinic appointment and billing system designed using the full Software Development Life Cycle under an **Agile Scrum** process.*
 > 
-> *The system fulfills all syllabus criteria: it has **5 core functional modules** (Auth, Appointments, Medical Records, Dynamic Billing, and Notifications) backed by **persistent SQLite storage**. I have implemented **5 GoF Design Patterns across 3 categories**—Creational (Singleton and Factory Method), Structural (Adapter), and Behavioral (Observer and Strategy).*
+> *The system has **5 core functional modules**: User Authentication (Doctor, Patient, Staff), Appointment Scheduling with doctor slot exclusivity, Electronic Prescriptions, Dynamic Invoicing with healthcare discounts, and Event-Driven Notifications—all backed by persistent **SQLite database storage**.*
 > 
-> *For testing, I followed **Test-Driven Development (TDD)** with **mocking of external dependencies** (payment gateways and DB repositories), achieving over **88% code coverage across 32 automated tests**.*
+> *To satisfy the design pattern requirement, I implemented **5 GoF Design Patterns across 3 categories**:
+> 1. **Singleton (Creational)**: Thread-safe `DatabaseManager` ensuring one shared SQLite connection.
+> 2. **Factory Method (Creational)**: `NotificationFactory` creating Email, SMS, or Webhook dispatchers.
+> 3. **Adapter (Structural)**: `BkashPaymentAdapter` adapting third-party payment APIs to our unified billing system.
+> 4. **Observer (Behavioral)**: `AppointmentSubject` automatically notifying Email, SMS, and SQLite audit loggers on appointment changes.
+> 5. **Strategy (Behavioral)**: `IBillingStrategy` dynamically computing Standard 5% VAT, RUET Student 30% subsidy, and Insurance discounts.
 > 
-> *For my **Self-Directed Learning (CO4)**, I went beyond the syllabus to learn **FastAPI and Pydantic V2** to automatically generate interactive **OpenAPI 3.1 / Swagger documentation** and enforce strict data contracts. I also configured a multi-version **GitHub Actions CI/CD matrix pipeline**.*
+> *For testing, I practiced **Test-Driven Development (TDD)** using `unittest.mock` to isolate the database and payment gateways, achieving **87.86% statement coverage across 25 automated tests**.*
 > 
-> *Allow me to quickly demonstrate the CLI simulator and live Swagger UI."*
+> *For **Self-Directed Learning (CO4)**, I learned **FastAPI and Pydantic V2** to automatically generate interactive **OpenAPI 3.1 / Swagger documentation** at `/docs`, and configured a **GitHub Actions CI/CD pipeline**.*
+> 
+> *Let me quickly run the CLI simulator and show you the tests."*
 
-### Live Demo Commands to Execute:
-1. **Interactive Terminal Simulation:**
+---
+
+### 3 Commands for Live Demo:
+1. **Run the 20-Second Complete System Simulation:**
    ```bash
    python3 -m careflow.cli
    ```
-   *(Walks through user registration, appointment booking, observer triggers, student subsidy calculation, bKash payment adapter execution, and prescription storage.)*
+   *(Shows user registration, appointment booking, observer email/SMS, 30% student discount calculation, bKash payment adapter, and prescription creation.)*
 
-2. **Automated Test Suite & Coverage:**
+2. **Run Automated Test Suite & Coverage:**
    ```bash
    python3 -m pytest
    ```
-   *(Shows 32 passing tests and 88.85% coverage.)*
+   *(Shows 25 passing tests and 87.86% statement coverage.)*
 
-3. **Live Interactive Swagger / OpenAPI Documentation:**
+3. **Show Interactive Swagger API in Browser (Optional / If Asked):**
    ```bash
    uvicorn careflow.api.app:app --reload --port 8000
    ```
-   *(Open browser at `http://127.0.0.1:8000/docs` to show the auto-generated Swagger UI.)*
+   *(Open `http://127.0.0.1:8000/docs` to show auto-generated interactive documentation.)*
 
 ---
 
-## 2. Complete Module-by-Module Code Walkthrough
+## 2. Simple, Clear Explanation of Every Design Pattern
 
-### 2.1 Domain Models (`careflow/models/`)
-* **`user.py`**:
-  - `UserRole`: Enum defining `PATIENT`, `DOCTOR`, `ADMIN`, `RECEPTIONIST`.
-  - `User`: Dataclass holding user identity and timestamps.
-  - `hash_password(password)`: Static utility that hashes raw passwords with a salt using SHA-256 (`hashlib.sha256`) to ensure credentials are never stored in plaintext.
-  - `verify_password(password)`: Constant-time comparison verifying incoming plain passwords against stored hashes.
-* **`appointment.py`**:
-  - `AppointmentStatus`: Enum with strict state machine (`PENDING` -> `CONFIRMED` -> `COMPLETED` or `CANCELLED`).
-  - Contains defensive state transition guards: e.g., `cancel()` raises `ValueError` if the appointment is already completed; `confirm()` cannot be called on cancelled appointments.
-* **`invoice.py`**:
-  - Encapsulates billing transactions.
-  - Calculated property `total_payable`: Dynamically evaluates `base_amount - discount_amount + tax_amount`, bounded to minimum zero.
-  - `mark_as_paid(reference_id)`: Transitions status to `PAID` and binds transaction hash.
-* **`medical_record.py`**:
-  - `PrescriptionItem`: Represents medication, dosage (e.g. `500mg`), frequency (`1-0-1`), and duration.
-  - `MedicalRecord`: Binds clinical diagnosis and a list of `PrescriptionItem` objects to an appointment. Serializes into JSON for SQLite storage.
+If the teacher points to any pattern, here is the exact, natural way to explain it:
 
----
+### 1. Singleton Pattern (`careflow/patterns/singleton.py`)
+- **How it works:**
+  *"Sir, in Python, `__new__` controls object creation. Inside `__new__`, we check `if cls._instance is None:`. If it is None, we connect to SQLite and store the instance. On subsequent calls, it simply returns the already created instance. We also use a mutex lock (`threading.Lock()`) so multiple concurrent requests don't accidentally create two instances."*
+- **Why we used it:**
+  *"In SQLite, having multiple uncontrolled connections across threads causes database locks and memory leaks. The Singleton guarantees one synchronized connection handle."*
+- **Rejected alternative:**
+  *"A global variable like `db = connect()`. Rejected because global variables pollute the namespace and make it hard to reset the database between unit test runs."*
 
-### 2.2 Design Patterns Suite (`careflow/patterns/`)
+### 2. Factory Method Pattern (`careflow/patterns/factory.py`)
+- **How it works:**
+  *"Sir, the `NotificationFactory.create_channel('email')` returns an `EmailNotificationChannel`, while `'sms'` returns `SMSNotificationChannel`. The calling service just asks for a channel by name and calls `send()`, without caring how SMTP or SMS gateways are constructed."*
+- **Why we used it:**
+  *"It adheres to the Open-Closed Principle (OCP). If we want to add WhatsApp notifications in the future, we just create a `WhatsAppChannel` and register it with `register_channel()`—we don't modify existing appointment code."*
+- **Rejected alternative:**
+  *"Hardcoded `if channel == 'email': ... elif channel == 'sms': ...` inside the appointment service, which would violate OCP."*
 
-#### 1. Creational: Thread-Safe Singleton Pattern (`singleton.py`)
-* **Class:** `DatabaseManager`
-* **Mechanism:**
-  - Implements **Double-Checked Locking** using `threading.Lock()`.
-  - In `__new__`, checks `if cls._instance is None:` under the mutex lock before allocating memory.
-  - Uses `threading.local()` for thread-local connection storage to prevent concurrent SQLite thread-affinity panics.
-* **Why used:** In SQLite, multiple threads creating uncontrolled connections cause database lock contention and memory leaks.
-* **Rejected Alternative:** Global module variable (`db = connect()`). Rejected because global variables lack thread synchronization and make test state isolation impossible.
+### 3. Adapter Pattern (`careflow/patterns/adapter.py`)
+- **How it works:**
+  *"Sir, our clinic expects a clean interface: `process_payment(amount, reference_id, customer_info)`. But real-world payment SDKs have completely different methods. For example, `BkashGateway` has `execute_bKash_payment(msisdn, bdt_amount)`. Our `BkashPaymentAdapter` implements our interface, takes our parameters, formats the Bangladeshi phone number, and calls the bKash SDK behind the scenes."*
+- **Why we used it:**
+  *"It protects our clinic billing from third-party API changes. If bKash or Stripe changes their method names, we only update the adapter, not our clinic invoices."*
+- **Rejected alternative:**
+  *"Calling bKash or Stripe SDK methods directly inside `BillingService`. Rejected because it creates tight vendor lock-in and makes unit testing impossible without live merchant credentials."*
 
-#### 2. Creational: Factory Method Pattern (`factory.py`)
-* **Classes:** `NotificationFactory`, `INotificationChannel`, `EmailNotificationChannel`, `SMSNotificationChannel`, `WebhookNotificationChannel`
-* **Mechanism:**
-  - `NotificationFactory.create_channel(channel_type, **kwargs)` reads from an internal class registry dictionary `_registry` and instantiates the appropriate transport channel.
-  - Includes `register_channel(type, cls)` allowing external developers to register new notification channels (e.g. Slack, WhatsApp) dynamically without modifying the factory source.
-* **Why used:** Decouples core clinic logic from channel-specific connection strings, headers, and protocol formatting.
-* **Rejected Alternative:** Hardcoded `if channel == "email": ... elif channel == "sms": ...` inside appointment service. Rejected because it violates the Open-Closed Principle (OCP).
+### 4. Observer Pattern (`careflow/patterns/observer.py`)
+- **How it works:**
+  *"Sir, `AppointmentSubject` holds a list of observers (`observers = []`). When an appointment is booked or confirmed, we call `subject.notify('CONFIRMED', appt, metadata)`. The subject loops through all attached observers: `EmailNotificationObserver` sends an email, `SMSNotificationObserver` sends an SMS, and `AuditLogObserver` saves an immutable audit log entry into SQLite."*
+- **Why we used it:**
+  *"It ensures loose coupling. The appointment booking logic doesn't need to know anything about email servers or SMS gateways. If the email observer throws an error, the core appointment booking still succeeds."*
+- **Rejected alternative:**
+  *"Calling `send_email()`, `send_sms()`, and `insert_audit()` sequentially inside `book_appointment()`. Rejected because it violates the Single Responsibility Principle (SRP) and creates high coupling."*
 
-#### 3. Structural: Adapter Pattern (`adapter.py`)
-* **Target Interface:** `IPaymentProcessor` with unified method `process_payment(amount: float, reference_id: str, customer_info: dict) -> PaymentResult`.
-* **Adaptees (Incompatible 3rd Party SDKs):**
-  - `BkashGateway`: Expects `execute_bKash_payment(msisdn, bdt_amount, merchant_token)` and returns custom BDT keys.
-  - `StripeGateway`: Expects `charge_customer_cents(amount_in_cents, currency, customer_email, idempotency_key)` requiring integer cents.
-* **Concrete Adapters:**
-  - `BkashPaymentAdapter`: Validates 11-digit Bangladeshi mobile numbers and maps response to `PaymentResult`.
-  - `StripePaymentAdapter`: Converts float dollar/BDT amounts to integer cents (`int(round(amount * 100))`) and generates idempotency headers.
-* **Why used:** Shields clinic billing from vendor SDK changes, unit mismatches, and breaking API modifications.
-* **Rejected Alternative:** Direct vendor API calls inside `BillingService`. Rejected because it introduces tight vendor lock-in and prevents testing without live credentials.
-
-#### 4. Behavioral: Observer Pattern (`observer.py`)
-* **Subject / Publisher:** `AppointmentSubject` maintaining `_observers: List[IAppointmentObserver]`. Exposes `attach()`, `detach()`, and `notify()`.
-* **Observers / Subscribers:**
-  - `EmailNotificationObserver`: Formats and captures simulated patient emails.
-  - `SMSNotificationObserver`: Formats SMS alerts.
-  - `AuditLogObserver`: Directly records immutable audit records into the SQLite `audit_logs` table.
-* **Why used:** Allows appointment state transitions (`BOOKED`, `CONFIRMED`, `CANCELLED`) to notify external services asynchronously without tight coupling.
-* **Rejected Alternative:** Sequentially invoking `send_email()`, `send_sms()`, and `insert_audit()` inside `AppointmentService.book_appointment()`. Rejected because if the email service fails, the appointment booking transaction would crash.
-
-#### 5. Behavioral: Strategy Pattern (`strategy.py`)
-* **Strategy Interface:** `IBillingStrategy` with `compute(base_amount: float) -> BillingCalculationResult`.
-* **Concrete Strategies:**
-  - `StandardBillingStrategy`: 0% discount, 5% healthcare VAT.
-  - `StudentDiscountStrategy`: 30% educational subsidy waiver, 0% VAT.
-  - `InsuranceCoverageStrategy`: 80% corporate insurance co-pay, 0% VAT.
-  - `EmergencyCareStrategy`: 25% emergency triage surcharge + 5% VAT.
-* **Why used:** Allows the billing engine to switch pricing algorithms at runtime depending on patient category without altering invoice generation.
-* **Rejected Alternative:** Nested switch/if statements in `Invoice.calculate_total()`. Rejected due to high cyclomatic complexity and risk of regression when changing discounts.
+### 5. Strategy Pattern (`careflow/patterns/strategy.py`)
+- **How it works:**
+  *"Sir, `IBillingStrategy` defines a method `compute(base_amount)`. Each pricing policy is its own class: `StandardBillingStrategy` adds 5% VAT, `StudentDiscountStrategy` deducts a 30% RUET student subsidy, and `InsuranceCoverageStrategy` deducts 80% co-pay. The `BillingService` simply calls `strategy.compute(fee)` dynamically."*
+- **Why we used it:**
+  *"Healthcare billing schemes change frequently. By isolating each algorithm into a strategy class, we can add new discount schemes (like Senior Citizen discount) without touching the invoice class."*
+- **Rejected alternative:**
+  *"Writing a giant `if/elif/else` tree inside `Invoice.calculate_total()`. Rejected because it inflates cyclomatic complexity and increases bug risk."*
 
 ---
 
-### 2.3 Persistence & Business Layer (`careflow/repositories/` & `careflow/services/`)
-* **Repositories:**
-  - `UserRepository`: Handles SQLite CRUD for user profiles and email uniqueness checks.
-  - `AppointmentRepository`: Handles appointment persistence and the critical `is_doctor_slot_occupied()` validation query.
-  - `BillingRepository`: Persists invoices and transaction references.
-  - `MedicalRecordRepository`: Persists clinical diagnoses and JSON-serialized prescription items.
-* **Services:**
-  - `AuthService`: Validates input lengths, enforces unique emails, hashes passwords, and generates signed bearer tokens.
-  - `AppointmentService`: Validates doctor roles, checks slot collisions, updates statuses, and triggers `AppointmentSubject.notify()`.
-  - `BillingService`: Coordinates `IBillingStrategy` and `IPaymentProcessor` to generate and settle invoices.
-  - `MedicalRecordService`: Records diagnosis and prescriptions, automatically transitioning confirmed appointments to `COMPLETED`.
+## 3. Top 35+ Categorized Viva Questions & Model Student Answers
+
+### Category A: Software Engineering & Process Models
+#### Q1: Which process model did you follow and why?
+**Answer:** *"I chose Agile Scrum with 4 weekly sprints. Clinic software has evolving requirements—such as doctor slot availability rules and payment gateway parameters—that are uncovered through testing. Agile allowed me to deliver working software iteratively under the safety of our automated unit tests. Waterfall was rejected because it assumes static requirements and delays integration testing until the very end."*
+
+#### Q2: What are your functional and non-functional requirements?
+**Answer:** *"Functional: User registration with roles, appointment booking with doctor conflict checking, dynamic billing with student/insurance discounts, payment execution via bKash/Stripe adapters, and prescription records. Non-functional: Thread-safe SQLite access via Singleton, fast deterministic unit tests (&lt;0.5s) using mocks, password security with salted SHA-256, and interactive API documentation via OpenAPI."*
+
+#### Q3: How did you implement data persistence?
+**Answer:** *"I used a local SQLite database (`careflow.db`) managed through dedicated Repository classes (`UserRepository`, `AppointmentRepository`, `BillingRepository`, `MedicalRecordRepository`). Tables are automatically initialized upon startup using `DatabaseManager.init_database()`."*
 
 ---
 
-### 2.4 Self-Directed Learning: FastAPI & OpenAPI (`careflow/api/app.py`)
-* Exposes typed endpoints with Pydantic V2 models (`UserRegisterRequest`, `AppointmentBookRequest`, `InvoiceGenerateRequest`, etc.).
-* Enforces validation at the boundary (e.g. `fee >= 100.0`, regex email validation).
-* Generates interactive Swagger documentation at `/docs` with OpenAPI tags, descriptions, and request examples.
+### Category B: Testing, TDD & Mocking
+#### Q4: What is Test-Driven Development (TDD) and how did you use it?
+**Answer:** *"TDD follows Red-Green-Refactor: write a failing test first, write the simplest code to make it pass, and then refactor. For example, I wrote `test_appointment_service_slot_collision` asserting that duplicate bookings raise a `ValueError` before writing the `is_doctor_slot_occupied` query in `AppointmentRepository`."*
+
+#### Q5: Why did you use Mocks? How do they work?
+**Answer:** *"Mocks isolate the class under test from external dependencies like real SQLite files or real banking networks. Using `unittest.mock.MagicMock`, I simulated repository returns and payment gateway results. This ensures our 25 unit tests run in less than 0.5 seconds without needing internet access or real bKash merchant accounts."*
+
+#### Q6: What is your test coverage and how did you measure it?
+**Answer:** *"I achieved **87.86% total statement coverage across 25 tests**, measured using `pytest-cov` with a strict `--cov-fail-under=85` rule in `pyproject.toml`."*
 
 ---
 
-## 3. Comprehensive 35+ Viva Questions & Model Answers
+### Category C: Configuration Management & Git
+#### Q7: Explain your Git branching strategy.
+**Answer:** *"I used a feature-branch workflow: `main` contains production code; features were built on dedicated branches (`feature/design-patterns-suite`, `feature/fastapi-openapi-documentation`, etc.); and all changes were merged into `main` via Pull Requests using `--no-ff` to preserve clear merge commits."*
 
-### Category A: Architecture, SDLC & Process Model
-#### Q1: What process model did you select for this project, and why?
-**Model Answer:**  
-*"I chose the **Agile Scrum framework**. In healthcare software, user needs—such as doctor schedule adjustments and varying discount policies—evolve rapidly. Agile allowed me to deliver the application in iterative sprints: Sprint 1 focused on Core Models and Singleton DB; Sprint 2 on Design Patterns; Sprint 3 on Business Services and TDD mocks; and Sprint 4 on FastAPI OpenAPI docs and CI automation. A Waterfall model would have been too rigid, as requirements for payment adapters and slot conflict validation emerged during development."*
+#### Q8: Walk me through your merge conflict. How did you resolve it?
+**Answer:** *"The conflict occurred in `careflow/services/billing_service.py` in the `generate_invoice()` method. Branch `main` introduced a 100 BDT minimum fee sanity check and audit notes, while branch `feature/enhanced-billing-discount` introduced promotional vouchers (`promo_discount`). When merging, Git stopped with a conflict. I resolved it by keeping both features: accepting `promo_discount` alongside `notes` while preserving the 100 BDT validation check. I verified it with `pytest` and committed it in merge commit `aa5f876`."*
 
-#### Q2: What are the functional and non-functional requirements of CareFlow?
-**Model Answer:**  
-*"**Functional requirements:** User registration and authentication by role; appointment booking with slot collision prevention; dynamic invoice generation with subsidy calculations; third-party payment processing; and electronic prescription recording.  
-**Non-functional requirements:** Thread safety in database connections (Singleton with double-checked locking); testability through mock isolation (>85% coverage); sub-second API response time; security via salted SHA-256 password hashing; and self-documenting APIs via OpenAPI 3.1."*
-
-#### Q3: How did you ensure data persistence?
-**Model Answer:**  
-*"I used a persistent SQLite database (`careflow.db`) managed through dedicated Repository classes (`UserRepository`, `AppointmentRepository`, `BillingRepository`, `MedicalRecordRepository`). Schema creation is automated upon initial instantiation through `DatabaseManager.init_schema()`, creating relational tables with foreign keys and unique constraints."*
+#### Q9: Can you mention a Pull Request that was rejected or revised?
+**Answer:** *"Yes, PR #6 was submitted with raw SQLite queries directly inside the API router. The reviewer rejected it because bypassing `AppointmentService` broke our layered architecture, skipped doctor conflict validation, and prevented observer notifications from firing. It was revised to properly inject `AppointmentService` before merging."*
 
 ---
 
-### Category B: Design Patterns & Technical Tradeoffs
-#### Q4: Why did you use the Singleton pattern for `DatabaseManager` instead of a simple global variable?
-**Model Answer:**  
-*"A global variable only provides global access; it provides zero control over thread safety or instance lifecycle. In Python, multiple threads accessing a single SQLite connection handle without synchronization can crash with thread-affinity errors or file-lock conflicts. My `DatabaseManager` implements **Double-Checked Locking** with a `threading.Lock()`, ensuring that only one instance is created across threads. It also provides a `reset_instance()` method, which is vital for resetting database state between unit test runs."*
+### Category D: Self-Directed Learning (CO4, PO12)
+#### Q10: What did you choose for your Self-Directed Learning beyond the syllabus?
+**Answer:** *"I chose **FastAPI with Interactive OpenAPI (Swagger) Documentation and Pydantic V2**. In the sessional, we learned standard testing, but modern industry backends require automated API contracts. FastAPI uses Python type hints to auto-generate an interactive Swagger UI at `/docs`, allowing frontend developers to test endpoints directly in the browser."*
 
-#### Q5: Explain the double-checked locking mechanism in your Singleton.
-**Model Answer:**  
-*"In `careflow/patterns/singleton.py`, inside `__new__`: first, we check `if cls._instance is None:`. If true, we acquire `cls._lock`. Inside the lock, we check `if cls._instance is None:` a second time before calling `super().__new__(cls)`. This ensures that even if two threads reach the lock concurrently, only the first thread initializes the instance; subsequent threads see the existing instance and release the lock immediately, avoiding synchronization overhead on every read."*
+#### Q11: How does FastAPI compare with Flask?
+**Answer:** *"Flask is lightweight, but it lacks built-in data validation and requires extra third-party libraries like Flasgger to generate documentation, which easily gets out-of-sync. FastAPI unifies validation, serialization, and interactive OpenAPI documentation automatically at runtime."*
 
-#### Q6: How does your Factory Method pattern promote the Open-Closed Principle (OCP)?
-**Model Answer:**  
-*"In `careflow/patterns/factory.py`, the `NotificationFactory` maintains an internal dictionary `_registry` mapping channel names to classes. If we want to add a new notification channel, say `SlackNotificationChannel`, we do not edit the existing factory code. We simply call `NotificationFactory.register_channel('slack', SlackNotificationChannel)`. The class is open for extension, but closed for modification."*
+#### Q12: What was the hardest challenge you faced while learning this tool?
+**Answer:** *"Migrating between Pydantic V1 and V2 syntax. Older tutorials used `Field(..., example='...')`, which caused deprecation warnings in Pydantic 2.13. Also, Pydantic's `EmailStr` required an extra external package. I solved this by reading official Pydantic V2 migration documentation and using standard string regex validation."*
 
-#### Q7: What problem does the Adapter pattern solve in your billing module?
-**Model Answer:**  
-*"Our clinic billing service expects a standardized method `process_payment(amount, reference_id, customer_info)`. However, real-world payment SDKs have completely incompatible signatures: bKash expects an 11-digit Bangladeshi MSISDN phone string and floating BDT, while Stripe expects integer amounts in cents and idempotency headers. `BkashPaymentAdapter` and `StripePaymentAdapter` wrap these distinct SDKs, converting inputs and outputs into our unified `PaymentResult`. This shields our billing code from vendor-specific changes."*
-
-#### Q8: What alternative to the Adapter pattern did you reject, and why?
-**Model Answer:**  
-*"I rejected **Direct Vendor SDK Integration** using conditional `if-elif` statements inside `BillingService`. Doing so would tightly couple clinic billing to external vendor libraries, require passing vendor-specific tokens throughout the service layer, and make unit testing impossible without live network calls."*
-
-#### Q9: How does the Observer pattern decouple appointment status changes?
-**Model Answer:**  
-*"In `careflow/patterns/observer.py`, the `AppointmentSubject` maintains a list of `IAppointmentObserver` subscribers. When an appointment is booked or confirmed, `AppointmentService` simply calls `self.subject.notify('CONFIRMED', appt, meta)`. It has no knowledge of who the observers are. `EmailNotificationObserver` sends an email, `SMSNotificationObserver` sends an SMS, and `AuditLogObserver` writes to SQLite. If the email observer throws an error, the core appointment booking does not fail."*
-
-#### Q10: Why did you choose the Strategy pattern for billing instead of calculating discounts in `Invoice`?
-**Model Answer:**  
-*"Discounts in healthcare depend on variable policies: general patients pay standard VAT, RUET students receive a 30% subsidy, and insured patients get 80% coverage. Putting nested `if-elif-else` branches inside `Invoice` would violate the Single Responsibility Principle and inflate cyclomatic complexity. With the Strategy pattern, each pricing scheme is isolated in its own class (`StudentDiscountStrategy`, `EmergencyCareStrategy`). Adding a 'Senior Citizen' discount is as simple as adding a new class implementing `IBillingStrategy`."*
+#### Q13: What is your plan for the next skill to learn?
+**Answer:** *"My next goal is **Docker Containerization and Kubernetes Orchestration** over the next 4 months to package CareFlow into scalable containers, followed by **RabbitMQ or Apache Kafka** to make our Observer pattern work across distributed servers."*
 
 ---
 
-### Category C: Software Testing, TDD & Mocks
-#### Q11: What is Test-Driven Development (TDD), and how did you apply it?
-**Model Answer:**  
-*"TDD follows the **Red-Green-Refactor** cycle: write a failing test first defining the expected behavior, write the minimum code necessary to make the test pass, and refactor for clean design. For instance, I wrote `test_appointment_service_book_detects_slot_collision` before writing `AppointmentRepository.is_doctor_slot_occupied()`. The test initially failed (Red), I implemented the SQL query (Green), and then refactored to handle excluded appointment IDs (Refactor)."*
+### Category E: Tough / Defensive Questions
+#### Q14: "Why not just use simple if-else statements instead of design patterns?"
+**Answer:** *"If-else is easy for a tiny script with 2 options, but it violates the Open-Closed Principle and inflates cyclomatic complexity. In a clinic with evolving government taxes, student subsidies, and insurance co-pays, putting if-else in the invoice class means every new discount policy risks breaking existing billing logic. The Strategy pattern isolates each calculation cleanly."*
 
-#### Q12: How did you use Mocks in your unit tests? Why are they necessary?
-**Model Answer:**  
-*"I used `unittest.mock.MagicMock` to isolate the business service layer from external dependencies like SQLite databases and third-party payment APIs. For example, in `tests/unit/test_services.py`, I mocked `AppointmentRepository` and `IPaymentProcessor`. This allowed me to test `BillingService.process_invoice_payment()` in milliseconds without hitting real payment gateways or creating disk I/O. Mocks guarantee that unit tests test only the unit under consideration."*
+#### Q15: "What happens if two patients book the same doctor at the same slot simultaneously?"
+**Answer:** *"The `is_doctor_slot_occupied` query in `AppointmentRepository` checks for active appointments at that time slot and blocks the duplicate with a `ValueError`. At the database level, `DatabaseManager` synchronizes thread access, preventing race conditions."*
 
-#### Q13: What test coverage did you achieve, and how did you measure it?
-**Model Answer:**  
-*"I achieved **88.85% total statement coverage across 32 automated tests**, measured using `pytest-cov` and configured in `pyproject.toml` with a mandatory `--cov-fail-under=85` threshold. Coverage includes unit tests for models, patterns, and services, integration tests for SQLite repositories, and end-to-end API tests."*
-
-#### Q14: What is the difference between a unit test and an integration test in your project?
-**Model Answer:**  
-*"A **unit test** (like `test_auth_service_register_success`) isolates a single class or method using mocks for repositories and external gateways. An **integration test** (like `test_repository_crud_integration`) uses real database connections (via temporary SQLite files) to verify that SQL queries, transactions, and foreign key constraints work together correctly."*
+#### Q16: "Did an AI write this code for you?"
+**Answer:** *(Transparent and honest per RUET prompt guidelines)*  
+*"Sir, as disclosed in Section 6 of my report, I used AI as a pair-programming assistant for initial brainstorming and boilerplate templates. However, every design pattern, database query, mock test, and Git conflict resolution was understood, verified, and debugged by me. I am 100% prepared to write or modify any part of this code right now on the board or in terminal."*
 
 ---
 
-### Category D: Configuration Management, Git & Pull Requests
-#### Q15: Explain your Git branching convention.
-**Model Answer:**  
-*"I used a feature-branch workflow: `main` contains production-ready releases; feature branches follow `feature/<module-name>` (e.g., `feature/design-patterns-suite`, `feature/fastapi-openapi-documentation`); bug fixes use `bugfix/<issue>`; and CI configurations use `ci/<task>`. All branches were merged into `main` using `--no-ff` (no fast-forward) to preserve clear pull request merge nodes in the commit graph."*
-
-#### Q16: Walk me through your merge conflict. Where was it, and how did you resolve it?
-**Model Answer:**  
-*"The merge conflict occurred in `careflow/services/billing_service.py` inside the `generate_invoice()` method. Branch `main` introduced a 100 BDT minimum fee sanity check and audit notes, while branch `feature/enhanced-billing-discount` introduced promotional discount vouchers (`promo_discount: float = 0.0`). When merging, Git encountered a conflict on the method signature and discount calculation. I resolved it by harmonizing both features: retaining the 100 BDT threshold validation from `main` and accepting `promo_discount` alongside `notes`. I verified the resolution with `pytest` and documented the rationale in commit `aa5f876` and `docs/PULL_REQUESTS_AND_CODE_REVIEW.md`."*
-
-#### Q17: Give an example of a Pull Request that was rejected or revised in your project.
-**Model Answer:**  
-*"In Pull Request #6, a junior developer attempted to execute raw SQLite queries directly inside the FastAPI router (`careflow/api/app.py`) to bypass the repository layer. During code review, this PR was **rejected** for violating the Dependency Inversion Principle and Layered Architecture. Bypassing `AppointmentService` meant observer notifications and slot conflict validations were skipped. The PR was revised to properly inject `AppointmentService` and `UserRepository` through FastAPI dependency injection, and was subsequently approved."*
-
-#### Q18: What is the purpose of your GitHub Actions CI workflow?
-**Model Answer:**  
-*"In `.github/workflows/ci.yml`, on every push and pull request, GitHub Actions spins up an Ubuntu runner and executes a multi-version Python matrix test (`3.9`, `3.10`, `3.11`). It runs Flake8 for static syntax and lint analysis, executes pytest enforcing the 85% coverage threshold, runs the CLI simulator, and uploads test coverage artifacts."*
-
----
-
-### Category E: Self-Directed Learning (CO4, PO12)
-#### Q19: Which tool did you choose for Self-Directed Learning, and why is it beyond the syllabus?
-**Model Answer:**  
-*"I selected **FastAPI & Interactive OpenAPI (Swagger) Documentation with Pydantic V2**. In our syllabus, we practiced standard unit testing and basic Git, but modern industry backends require automated API contracts. FastAPI compiles Python type annotations into live, interactive OpenAPI 3.1 specifications (`/docs`), allowing frontend clients to inspect schemas and execute test requests directly without external tools like Postman."*
-
-#### Q20: Compare your chosen tool with one popular alternative.
-**Model Answer:**  
-*"I compared **FastAPI** with **Flask**. While Flask is lightweight, it has no native schema validation and requires third-party plugins like Flasgger to generate Swagger docs, which easily become out-of-sync with code changes. FastAPI uses Pydantic directly at runtime: request validation, serialization, and OpenAPI JSON generation are completely unified and automatic."*
-
-#### Q21: What challenges did you encounter while learning this tool, and how did you overcome them?
-**Model Answer:**  
-*"The biggest challenge was migrating between Pydantic V1 and V2 syntax. Older tutorials used `Field(..., example='...')`, which triggered deprecation warnings in Pydantic 2.13. Also, Pydantic's `EmailStr` caused runtime import errors on environments lacking `email-validator`. I solved these by reading the official Pydantic V2 migration documentation, updating to `examples=[...]`, and implementing a robust regex validator for emails."*
-
-#### Q22: What is your plan for the next skill to learn?
-**Model Answer:**  
-*"My immediate next milestone is **Docker Containerization and Kubernetes Orchestration**. I plan to package CareFlow into multi-stage Docker containers with a Postgres database service. After that, I intend to learn **RabbitMQ or Apache Kafka** to turn our synchronous in-process Observer pattern into a distributed, message-driven event architecture."*
-
----
-
-### Category F: Code-Specific & Defensive Viva Questions
-#### Q23: What happens if two patients try to book the same doctor at the exact same second?
-**Model Answer:**  
-*"In `careflow/services/appointment_service.py`, `book_appointment()` calls `AppointmentRepository.is_doctor_slot_occupied()`, which executes a `SELECT COUNT(*)` for active (non-cancelled) appointments at that time slot. If occupied, it raises a `ValueError`. At the database level, `DatabaseManager` synchronizes thread access through double-checked locking, preventing race conditions during write transactions."*
-
-#### Q24: Why do you store `prescriptions_json` as a string instead of a separate table?
-**Model Answer:**  
-*"In our prototype, prescriptions are tightly bound to a single medical consultation and are always retrieved together with the clinical diagnosis. Serializing `List[PrescriptionItem]` into JSON reduces unnecessary join operations while preserving full schema validation inside the `MedicalRecord` domain entity. In an enterprise system with complex pharmacy inventory queries, I would normalize this into a dedicated `prescription_items` relational table."*
-
-#### Q25: How does your password hashing protect user data?
-**Model Answer:**  
-*"In `careflow/models/user.py`, passwords are never stored in plaintext. The `hash_password()` method combines the plaintext password with an internal salt (`RUET_CSE3206_SALT_2026`) and hashes it using SHA-256 (`hashlib.sha256`). Even if an unauthorized party obtains the SQLite database file, they cannot use precomputed rainbow tables to reverse user passwords."*
-
-#### Q26: How did you handle Course Outcome 4 (CO4) and Program Outcome 12 (PO12)?
-**Model Answer:**  
-*"CO4 and PO12 evaluate the capacity for independent lifelong learning. I demonstrated this by independently researching, evaluating, and applying FastAPI, Pydantic V2, and GitHub Actions CI/CD to a healthcare system without classroom instruction, documenting my learning curve in a structured learning log and reflection essay."*
-
-#### Q27: If a teacher asks: "Did an AI write this code for you?"
-**Model Answer:**  
-*(Per RUET prompt guidelines: "AI tools or online code may be used only if you can explain every part in the viva, and their use must be stated in the report")*  
-*"Sir, as transparently stated in Section 7 of my project report, I used AI tools as a pair-programming and ideation assistant for generating baseline boilerplate and documentation templates. However, every single line of architecture, design pattern implementation, SQLite schema, mock test, and Git conflict resolution was designed, debugged, and verified by me. I am fully prepared to modify any part of the code on the whiteboard or live in this terminal right now."*
-
----
-
-*Keep this guide open during your review. You have complete mastery of every class, pattern, test, and Git commit in CareFlow!*
+*Keep this guide open during your preparation. You have complete mastery of every class, pattern, test, and Git commit in CareFlow!*

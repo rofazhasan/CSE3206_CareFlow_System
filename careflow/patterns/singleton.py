@@ -1,56 +1,33 @@
 import sqlite3
 import threading
-from typing import Optional
 
 
 class DatabaseManager:
     """
     Singleton Pattern (Creational Category).
-    Ensures a single, thread-safe access point to the SQLite database.
-    
-    Problem Solved:
-      Multiple direct database connections in multi-threaded application environments 
-      can lead to file-lock collisions in SQLite, memory leaks, and inconsistent schema migrations.
-    
-    Alternative Rejected:
-      Global Database Variable or passing connection everywhere:
-      - Global variables pollute global scope and cannot encapsulate thread-safety locks.
-      - Passing connection instances everywhere creates high coupling across layers.
+    Ensures that only one shared database manager instance exists in the application.
     """
-    _instance: Optional["DatabaseManager"] = None
-    _lock: threading.Lock = threading.Lock()
+    _instance = None
+    _lock = threading.Lock()
 
-    def __new__(cls, db_path: str = "careflow.db") -> "DatabaseManager":
+    def __new__(cls, db_name="careflow.db"):
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super(DatabaseManager, cls).__new__(cls)
-                cls._instance._initialized = False
+                cls._instance.db_name = db_name
+                cls._instance.connection = None
+                cls._instance.init_database()
         return cls._instance
 
-    def __init__(self, db_path: str = "careflow.db"):
-        if getattr(self, "_initialized", False):
-            return
-        self.db_path = db_path
-        self._local = threading.local()
-        self.init_schema()
-        self._initialized = True
+    def get_connection(self):
+        """Returns an active SQLite database connection with row access."""
+        if self.connection is None:
+            self.connection = sqlite3.connect(self.db_name, check_same_thread=False)
+            self.connection.row_factory = sqlite3.Row
+        return self.connection
 
-    def get_connection(self) -> sqlite3.Connection:
-        """Returns a thread-local SQLite connection with dictionary-like row factory."""
-        if not hasattr(self._local, "connection") or self._local.connection is None:
-            conn = sqlite3.connect(self.db_path, check_same_thread=False)
-            conn.row_factory = sqlite3.Row
-            self._local.connection = conn
-        return self._local.connection
-
-    def close(self) -> None:
-        """Closes thread-local connection."""
-        if hasattr(self._local, "connection") and self._local.connection is not None:
-            self._local.connection.close()
-            self._local.connection = None
-
-    def init_schema(self) -> None:
-        """Initializes database tables if they do not exist."""
+    def init_database(self):
+        """Creates the initial database tables if they do not exist."""
         conn = self.get_connection()
         cursor = conn.cursor()
 
@@ -114,10 +91,15 @@ class DatabaseManager:
         """)
         conn.commit()
 
+    def close(self):
+        if self.connection:
+            self.connection.close()
+            self.connection = None
+
     @classmethod
-    def reset_instance(cls) -> None:
-        """Helper for unit test teardown to force a fresh singleton instance."""
+    def reset_instance(cls):
+        """Helper to reset singleton instance between tests."""
         with cls._lock:
-            if cls._instance is not None:
+            if cls._instance:
                 cls._instance.close()
             cls._instance = None

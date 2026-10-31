@@ -141,3 +141,4 @@ def test_api_full_registration_and_booking_flow():
     rec_data = rec_resp.json()["record"]
     assert rec_data["diagnosis"] == "Mild Essential Hypertension"
     assert len(rec_data["prescriptions"]) == 1
+

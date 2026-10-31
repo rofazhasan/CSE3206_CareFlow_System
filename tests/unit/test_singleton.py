@@ -45,3 +45,4 @@ def test_database_manager_schema_initialization():
             assert expected in tables, f"Expected table {expected} to exist in database"
         db.close()
         DatabaseManager.reset_instance()
+

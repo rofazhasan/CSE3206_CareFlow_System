@@ -1,94 +1,75 @@
 """
 Factory Method Pattern (Creational Category).
-Decouples notification dispatch clients from concrete channel transport logic.
-
-Problem Solved:
-  Directly instantiating Email or SMS senders inside service layers causes tight coupling
-  to third-party vendor APIs, makes unit testing difficult, and violates the Open-Closed Principle.
-
-Alternative Rejected:
-  Conditionals (if-elif-else) in business logic:
-  - Whenever a new channel (e.g. WhatsApp, Slack, Webhook) is added, core business code
-    must be reopened and modified, risking regressions.
+Creates the appropriate notification channel object (Email, SMS, Webhook)
+without exposing creation logic directly to the caller.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any
 
 
 class INotificationChannel(ABC):
     @abstractmethod
-    def send(self, recipient: str, subject: str, message: str) -> Dict[str, Any]:
-        """Dispatch notification to specified recipient."""
+    def send(self, recipient: str, subject: str, message: str) -> dict:
         pass
 
 
 class EmailNotificationChannel(INotificationChannel):
-    def __init__(self, smtp_host: str = "smtp.clinic.careflow.com"):
+    def __init__(self, smtp_host="smtp.careflow.com"):
         self.smtp_host = smtp_host
 
-    def send(self, recipient: str, subject: str, message: str) -> Dict[str, Any]:
-        # In production this connects to SMTP/SendGrid. For testing/demo, it returns dispatch payload.
+    def send(self, recipient: str, subject: str, message: str) -> dict:
         return {
             "status": "SENT",
             "channel": "EMAIL",
             "recipient": recipient,
             "subject": subject,
-            "body": message,
-            "gateway": self.smtp_host,
+            "message": message,
         }
 
 
 class SMSNotificationChannel(INotificationChannel):
-    def __init__(self, sms_api_key: str = "SMS-PROD-KEY-RUET"):
-        self.sms_api_key = sms_api_key
+    def __init__(self, sender_id="CareFlow"):
+        self.sender_id = sender_id
 
-    def send(self, recipient: str, subject: str, message: str) -> Dict[str, Any]:
-        # Formatted for cellular telco gateway
+    def send(self, recipient: str, subject: str, message: str) -> dict:
         return {
             "status": "SENT",
             "channel": "SMS",
             "recipient": recipient,
-            "body": f"[{subject}] {message}",
-            "gateway": "TelcoSMS-Aggregator",
+            "message": f"[{subject}] {message}",
         }
 
 
 class WebhookNotificationChannel(INotificationChannel):
-    def __init__(self, endpoint_url: str = "https://hooks.clinic.org/events"):
-        self.endpoint_url = endpoint_url
+    def __init__(self, webhook_url="https://hooks.clinic.org"):
+        self.webhook_url = webhook_url
 
-    def send(self, recipient: str, subject: str, message: str) -> Dict[str, Any]:
+    def send(self, recipient: str, subject: str, message: str) -> dict:
         return {
             "status": "SENT",
             "channel": "WEBHOOK",
             "recipient": recipient,
-            "payload": {"title": subject, "content": message},
-            "endpoint": self.endpoint_url,
+            "payload": {"title": subject, "body": message},
         }
 
 
 class NotificationFactory:
     """
-    Factory Method class responsible for instantiating the appropriate
-    notification channel handler based on channel type string.
+    Factory Method class that instantiates notification channels based on type.
     """
-    _registry: Dict[str, type] = {
+    _channels = {
         "email": EmailNotificationChannel,
         "sms": SMSNotificationChannel,
         "webhook": WebhookNotificationChannel,
     }
 
     @classmethod
-    def register_channel(cls, channel_type: str, channel_cls: type) -> None:
-        """Extensibility hook allowing new channels to be registered at runtime."""
-        cls._registry[channel_type.lower()] = channel_cls
+    def create_channel(cls, channel_type: str, **kwargs) -> INotificationChannel:
+        channel_key = channel_type.lower()
+        if channel_key not in cls._channels:
+            raise ValueError(f"Unsupported notification channel '{channel_type}'. Choose from: email, sms, webhook")
+        return cls._channels[channel_key](**kwargs)
 
     @classmethod
-    def create_channel(cls, channel_type: str, **kwargs) -> INotificationChannel:
-        """Factory Method to construct channel instance."""
-        target_cls = cls._registry.get(channel_type.lower())
-        if not target_cls:
-            valid_channels = ", ".join(cls._registry.keys())
-            raise ValueError(f"Unsupported notification channel '{channel_type}'. Supported: {valid_channels}")
-        return target_cls(**kwargs)
+    def register_channel(cls, channel_name: str, channel_class):
+        cls._channels[channel_name.lower()] = channel_class

@@ -121,3 +121,4 @@ A real Git merge conflict was triggered on `careflow/services/billing_service.py
    ```
 3. **Verification**: Executed `pytest` across all 32 test cases; all assertions passed with 88.8% code coverage.
 4. **Commit**: Staged with `git add` and committed with detailed conflict rationale in commit `aa5f876`.
+

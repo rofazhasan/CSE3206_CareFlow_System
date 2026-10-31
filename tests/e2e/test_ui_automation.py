@@ -146,3 +146,4 @@ def test_e2e_clinic_patient_journey():
     )
     assert rx_res.status_code == 201
     assert rx_res.json()["record"]["diagnosis"] == "Asthenopia (Computer Vision Syndrome)"
+

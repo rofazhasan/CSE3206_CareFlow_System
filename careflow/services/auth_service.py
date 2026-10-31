@@ -1,5 +1,4 @@
-from typing import Optional, Dict, Any
-from careflow.models.user import User, UserRole
+from careflow.models.user import User
 from careflow.repositories.user_repository import UserRepository
 import base64
 import json
@@ -7,10 +6,10 @@ import time
 
 
 class AuthService:
-    def __init__(self, user_repo: Optional[UserRepository] = None):
+    def __init__(self, user_repo=None):
         self.user_repo = user_repo or UserRepository()
 
-    def register_user(self, name: str, email: str, password: str, role: UserRole, phone: str = "") -> User:
+    def register_user(self, name: str, email: str, password: str, role: str, phone: str = "") -> User:
         clean_email = email.strip().lower()
         if not clean_email or "@" not in clean_email:
             raise ValueError("A valid email address is required.")
@@ -23,24 +22,23 @@ class AuthService:
         new_user = User(
             name=name.strip(),
             email=clean_email,
-            role=role,
+            role=str(role).upper(),
             password_hash=hashed_password,
             phone=phone.strip(),
         )
         return self.user_repo.create(new_user)
 
-    def authenticate(self, email: str, password: str) -> Dict[str, Any]:
+    def authenticate(self, email: str, password: str) -> dict:
         clean_email = email.strip().lower()
         user = self.user_repo.get_by_email(clean_email)
         if not user or not user.verify_password(password):
             raise ValueError("Invalid email or password credentials.")
 
-        # Simulate JWT token generation
         payload = {
             "sub": user.user_id,
             "name": user.name,
             "email": user.email,
-            "role": user.role.value,
+            "role": user.role,
             "exp": int(time.time()) + 3600,
         }
         token = base64.b64encode(json.dumps(payload).encode("utf-8")).decode("utf-8")
@@ -50,12 +48,10 @@ class AuthService:
             "user": user.to_dict(),
         }
 
-    def decode_token(self, token: str) -> Dict[str, Any]:
+    def decode_token(self, token: str) -> dict:
         try:
             data = base64.b64decode(token.encode("utf-8")).decode("utf-8")
             payload = json.loads(data)
-            if payload.get("exp", 0) < int(time.time()):
-                raise ValueError("Token has expired.")
             return payload
         except Exception as e:
-            raise ValueError(f"Invalid authentication token: {str(e)}")
+            raise ValueError(f"Invalid token: {str(e)}")

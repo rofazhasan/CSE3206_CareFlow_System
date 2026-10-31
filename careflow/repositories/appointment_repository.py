@@ -1,10 +1,9 @@
-from typing import Optional, List
-from careflow.models.appointment import Appointment, AppointmentStatus
+from careflow.models.appointment import Appointment
 from careflow.patterns.singleton import DatabaseManager
 
 
 class AppointmentRepository:
-    def __init__(self, db_manager: Optional[DatabaseManager] = None):
+    def __init__(self, db_manager=None):
         self.db = db_manager or DatabaseManager()
 
     def create(self, appointment: Appointment) -> Appointment:
@@ -23,14 +22,14 @@ class AppointmentRepository:
                 appointment.scheduled_time,
                 appointment.reason,
                 appointment.fee,
-                appointment.status.value if isinstance(appointment.status, AppointmentStatus) else str(appointment.status),
+                appointment.status,
                 appointment.created_at,
             ),
         )
         conn.commit()
         return appointment
 
-    def get_by_id(self, appointment_id: str) -> Optional[Appointment]:
+    def get_by_id(self, appointment_id: str):
         conn = self.db.get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM appointments WHERE appointment_id = ?", (appointment_id,))
@@ -44,12 +43,10 @@ class AppointmentRepository:
             scheduled_time=row["scheduled_time"],
             reason=row["reason"],
             fee=row["fee"],
-            status=AppointmentStatus(row["status"]),
-            created_at=row["created_at"],
+            status=row["status"],
         )
 
-    def is_doctor_slot_occupied(self, doctor_id: str, scheduled_time: str, exclude_appointment_id: Optional[str] = None) -> bool:
-        """Checks if a doctor already has an active (non-cancelled) appointment at the specified slot."""
+    def is_doctor_slot_occupied(self, doctor_id: str, scheduled_time: str, exclude_appointment_id: str = None) -> bool:
         conn = self.db.get_connection()
         cursor = conn.cursor()
         if exclude_appointment_id:
@@ -71,17 +68,17 @@ class AppointmentRepository:
         row = cursor.fetchone()
         return (row["cnt"] > 0) if row else False
 
-    def update_status(self, appointment_id: str, status: AppointmentStatus) -> bool:
+    def update_status(self, appointment_id: str, status: str) -> bool:
         conn = self.db.get_connection()
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE appointments SET status = ? WHERE appointment_id = ?",
-            (status.value, appointment_id),
+            (status.upper(), appointment_id),
         )
         conn.commit()
         return cursor.rowcount > 0
 
-    def list_by_patient(self, patient_id: str) -> List[Appointment]:
+    def list_by_patient(self, patient_id: str):
         conn = self.db.get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM appointments WHERE patient_id = ? ORDER BY scheduled_time DESC", (patient_id,))
@@ -94,13 +91,12 @@ class AppointmentRepository:
                 scheduled_time=r["scheduled_time"],
                 reason=r["reason"],
                 fee=r["fee"],
-                status=AppointmentStatus(r["status"]),
-                created_at=r["created_at"],
+                status=r["status"],
             )
             for r in rows
         ]
 
-    def list_by_doctor(self, doctor_id: str) -> List[Appointment]:
+    def list_by_doctor(self, doctor_id: str):
         conn = self.db.get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM appointments WHERE doctor_id = ? ORDER BY scheduled_time ASC", (doctor_id,))
@@ -113,8 +109,7 @@ class AppointmentRepository:
                 scheduled_time=r["scheduled_time"],
                 reason=r["reason"],
                 fee=r["fee"],
-                status=AppointmentStatus(r["status"]),
-                created_at=r["created_at"],
+                status=r["status"],
             )
             for r in rows
         ]

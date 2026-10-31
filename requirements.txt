@@ -11,3 +11,4 @@ requests>=2.31.0
 # Documentation & PDF Report Generation
 reportlab>=4.0.0
 matplotlib>=3.8.0
+

@@ -39,3 +39,4 @@ The official documentation for FastAPI and Pydantic served as my most reliable r
 This sessional reaffirmed that software engineering is fundamentally about managing complexity and evolving contracts. Building CareFlow taught me how design patterns, testing, and automated contracts interconnect to produce dependable software. 
 
 My next milestone is to master **Containerization and Kubernetes Orchestration (Docker & K8s)** within the next four months. Containerizing CareFlow and packaging its database, API, and background workers into multi-stage Dockerfiles will prepare me for scalable cloud deployments. Following that, I plan to explore **Message Broker architectures (RabbitMQ or Apache Kafka)** to transform our synchronous Observer pattern into a truly distributed, asynchronous event-driven system. This project has solidified my confidence to independently evaluate, adopt, and master emerging software engineering technologies throughout my engineering career.
+

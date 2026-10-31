@@ -1,15 +1,14 @@
-from dataclasses import dataclass, field
+import uuid
 from datetime import datetime
 from typing import List
-import uuid
 
 
-@dataclass
 class PrescriptionItem:
-    medicine_name: str
-    dosage: str  # e.g., "500mg"
-    frequency: str  # e.g., "1-0-1 after meal"
-    duration_days: int
+    def __init__(self, medicine_name: str, dosage: str, frequency: str, duration_days: int):
+        self.medicine_name = medicine_name
+        self.dosage = dosage  # e.g., "500mg"
+        self.frequency = frequency  # e.g., "1-0-1"
+        self.duration_days = int(duration_days)
 
     def to_dict(self) -> dict:
         return {
@@ -20,18 +19,18 @@ class PrescriptionItem:
         }
 
 
-@dataclass
 class MedicalRecord:
-    appointment_id: str
-    patient_id: str
-    doctor_id: str
-    diagnosis: str
-    notes: str = ""
-    prescriptions: List[PrescriptionItem] = field(default_factory=list)
-    record_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    def __init__(self, appointment_id: str, patient_id: str, doctor_id: str, diagnosis: str, notes: str = "", prescriptions: List[PrescriptionItem] = None, record_id: str = None, created_at: str = None):
+        self.record_id = record_id or str(uuid.uuid4())[:8]
+        self.appointment_id = appointment_id
+        self.patient_id = patient_id
+        self.doctor_id = doctor_id
+        self.diagnosis = diagnosis
+        self.notes = notes
+        self.prescriptions = prescriptions or []
+        self.created_at = created_at or datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    def add_prescription(self, item: PrescriptionItem) -> None:
+    def add_prescription(self, item: PrescriptionItem):
         self.prescriptions.append(item)
 
     def to_dict(self) -> dict:
@@ -42,6 +41,6 @@ class MedicalRecord:
             "doctor_id": self.doctor_id,
             "diagnosis": self.diagnosis,
             "notes": self.notes,
-            "prescriptions": [item.to_dict() for item in self.prescriptions],
+            "prescriptions": [p.to_dict() for p in self.prescriptions],
             "created_at": self.created_at,
         }
