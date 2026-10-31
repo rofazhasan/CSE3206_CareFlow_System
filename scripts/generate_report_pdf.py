@@ -323,11 +323,16 @@ def build_pdf(filename: str, docs_dir: str):
         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
     ]))
     story.append(pat_table)
+    story.append(PageBreak())
 
-    story.append(Spacer(1, 6))
+    # ==========================================
+    # UML CLASS & ARCHITECTURE DIAGRAM (PAGE 4)
+    # ==========================================
     story.append(Paragraph("<b>Figure 2.1: Comprehensive 4-Tier UML Class & Architecture Diagram</b>", styles["SubSectionHeader"]))
+    story.append(Spacer(1, 4))
     if os.path.exists(uml_img):
-        story.append(Image(uml_img, width=6.9 * inch, height=4.8 * inch))
+        story.append(Image(uml_img, width=6.9 * inch, height=5.2 * inch))
+    story.append(Spacer(1, 4))
     story.append(Paragraph("<i>The diagram above captures all four system tiers: (1) Domain Entities, (2) Repositories & Singleton DB, (3) Service Layer Orchestration, and (4) Gang of Four Design Patterns.</i>", styles["CalloutTimes"]))
 
     story.append(PageBreak())
@@ -368,7 +373,7 @@ def build_pdf(filename: str, docs_dir: str):
     story.append(Spacer(1, 8))
     story.append(Paragraph("<b>Figure 3.1: Actual Test Suite Execution & Coverage Report Screenshot (Pytest)</b>", styles["SubSectionHeader"]))
     if os.path.exists(test_img):
-        story.append(Image(test_img, width=6.9 * inch, height=4.2 * inch))
+        story.append(Image(test_img, width=6.9 * inch, height=4.15 * inch))
     story.append(Paragraph("<i>Screenshot verifying 25 tests passed in 0.51s with 87.86% total statement coverage across all modules.</i>", styles["CalloutTimes"]))
 
     story.append(PageBreak())
@@ -399,7 +404,7 @@ def build_pdf(filename: str, docs_dir: str):
     story.append(Spacer(1, 6))
     story.append(Paragraph("<b>Figure 4.1: Actual Git Commit History & Merge Conflict Resolution Screenshot</b>", styles["SubSectionHeader"]))
     if os.path.exists(git_img):
-        story.append(Image(git_img, width=6.9 * inch, height=4.2 * inch))
+        story.append(Image(git_img, width=6.9 * inch, height=4.24 * inch))
     story.append(Paragraph("<i>Screenshot displaying git log --graph --oneline showing all feature branches, PR merges, and the resolved merge conflict (commit aa5f876).</i>", styles["CalloutTimes"]))
 
     story.append(PageBreak())
@@ -449,7 +454,7 @@ def build_pdf(filename: str, docs_dir: str):
     story.append(Spacer(1, 6))
     story.append(Paragraph("<b>Figure 5.1: Actual Interactive OpenAPI (Swagger UI) Screenshot at /docs</b>", styles["SubSectionHeader"]))
     if os.path.exists(swagger_img):
-        story.append(Image(swagger_img, width=6.9 * inch, height=4.2 * inch))
+        story.append(Image(swagger_img, width=6.9 * inch, height=4.42 * inch))
     story.append(Paragraph("<i>Screenshot of live Swagger UI illustrating automated OpenAPI 3.1 endpoints and schemas for Auth, Appointments, Billing, and Prescriptions.</i>", styles["CalloutTimes"]))
 
     story.append(PageBreak())
@@ -467,7 +472,7 @@ def build_pdf(filename: str, docs_dir: str):
     story.append(Spacer(1, 6))
     story.append(Paragraph("<b>Figure 6.1: Actual Application Execution Screenshot (Terminal CLI Simulation)</b>", styles["SubSectionHeader"]))
     if os.path.exists(cli_img):
-        story.append(Image(cli_img, width=6.9 * inch, height=4.2 * inch))
+        story.append(Image(cli_img, width=6.9 * inch, height=4.15 * inch))
     story.append(Paragraph("<i>Screenshot showing live execution of all 6 steps across all 5 functional modules and GoF design patterns in terminal.</i>", styles["CalloutTimes"]))
 
     story.append(Spacer(1, 8))
