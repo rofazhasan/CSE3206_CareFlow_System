@@ -303,4 +303,5 @@ If the teacher points to any pattern, here is the exact, natural way to explain 
 
 ---
 
-*Keep this guide open during your preparation. You have complete mastery of every class, pattern, test, and Git commit in CareFlow!*
+*Keep this guide open during your preparation. You have complete mastery of every class, pattern, test, and Git commit in CareFlow!*  
+*For a complete end-to-end workflow explanation and natural speaking script in Bangla, refer to: [`CAREFLOW_WORKFLOW_AND_VIVA_BANGLA.md`](./CAREFLOW_WORKFLOW_AND_VIVA_BANGLA.md).*
