@@ -1,6 +1,6 @@
 """
 ReportLab PDF Generator for RUET CSE 3206 Software Engineering Sessional Project Report.
-Formats the complete report entirely in Times New Roman with embedded UML diagrams.
+Formats the complete report entirely in Times New Roman with comprehensive UML diagrams.
 """
 
 import os
@@ -122,36 +122,36 @@ def build_pdf(filename: str, uml_image_path: str):
     styles.add(ParagraphStyle(
         name="SectionHeader",
         fontName="Times-Bold",
-        fontSize=13.5,
+        fontSize=13,
         leading=17,
         textColor=primary_color,
-        spaceBefore=12,
+        spaceBefore=11,
         spaceAfter=5,
         keepWithNext=True,
     ))
     styles.add(ParagraphStyle(
         name="SubSectionHeader",
         fontName="Times-Bold",
-        fontSize=10.5,
+        fontSize=10,
         leading=14,
         textColor=secondary_color,
-        spaceBefore=8,
+        spaceBefore=7,
         spaceAfter=3,
         keepWithNext=True,
     ))
     styles.add(ParagraphStyle(
         name="BodyTimes",
         fontName="Times-Roman",
-        fontSize=10,
-        leading=14,
+        fontSize=9.5,
+        leading=13.5,
         textColor=dark_text,
         spaceAfter=5,
     ))
     styles.add(ParagraphStyle(
         name="BulletTimes",
         fontName="Times-Roman",
-        fontSize=9.5,
-        leading=13.5,
+        fontSize=9,
+        leading=13,
         textColor=dark_text,
         leftIndent=15,
         spaceAfter=3,
@@ -159,14 +159,14 @@ def build_pdf(filename: str, uml_image_path: str):
     styles.add(ParagraphStyle(
         name="CalloutTimes",
         fontName="Times-Italic",
-        fontSize=9.5,
-        leading=13.5,
+        fontSize=9,
+        leading=13,
         textColor=colors.HexColor("#2B6CB0"),
     ))
     styles.add(ParagraphStyle(
         name="TableHeaderTimes",
         fontName="Times-Bold",
-        fontSize=9,
+        fontSize=8.5,
         leading=11,
         textColor=colors.white,
         alignment=1,
@@ -174,14 +174,14 @@ def build_pdf(filename: str, uml_image_path: str):
     styles.add(ParagraphStyle(
         name="TableCellTimes",
         fontName="Times-Roman",
-        fontSize=8.5,
+        fontSize=8,
         leading=11,
         textColor=dark_text,
     ))
     styles.add(ParagraphStyle(
         name="TableCellTimesBold",
         fontName="Times-Bold",
-        fontSize=8.5,
+        fontSize=8,
         leading=11,
         textColor=dark_text,
     ))
@@ -256,12 +256,12 @@ def build_pdf(filename: str, uml_image_path: str):
         styles["BodyTimes"],
     ))
 
-    story.append(Spacer(1, 10))
+    story.append(PageBreak())
 
     # ==========================================
-    # SECTION 2: DESIGN PATTERNS & EMBEDDED UML
+    # SECTION 2: DESIGN PATTERNS & COMPREHENSIVE UML
     # ==========================================
-    story.append(Paragraph("2. Software Architecture & Design Patterns", styles["SectionHeader"]))
+    story.append(Paragraph("2. Software Architecture & Comprehensive UML Design", styles["SectionHeader"]))
     story.append(Paragraph(
         "To ensure maintainability, low coupling, and high cohesion, CareFlow implements <b>five Gang of Four (GoF) design patterns</b> across Creational, Structural, and Behavioral categories:",
         styles["BodyTimes"],
@@ -312,16 +312,17 @@ def build_pdf(filename: str, uml_image_path: str):
     ]))
     story.append(pat_table)
 
-    story.append(Spacer(1, 10))
-    story.append(Paragraph("<b>2.2 Embedded UML Class Diagram:</b>", styles["SubSectionHeader"]))
+    story.append(Spacer(1, 8))
+    story.append(Paragraph("<b>2.2 Comprehensive UML Architecture & Class Relationships:</b>", styles["SubSectionHeader"]))
     story.append(Paragraph(
-        "The following diagram illustrates the class architecture, design patterns, and structural relationships of the CareFlow system:",
+        "The architecture is organized into four distinct horizontal tiers: (1) Domain Entities, (2) Repositories with SQLite Singleton access, (3) Business Services & Controllers, and (4) Gang of Four Design Patterns. The diagram below illustrates every entity, method, attribute, and association:",
         styles["BodyTimes"],
     ))
 
-    # Embed Visual UML Image
+    # Embed Visual UML Image prominently
     if os.path.exists(uml_image_path):
-        story.append(Image(uml_image_path, width=6.8 * inch, height=4.6 * inch))
+        story.append(Spacer(1, 4))
+        story.append(Image(uml_image_path, width=6.9 * inch, height=4.9 * inch))
     else:
         story.append(Paragraph("<i>[UML Class Diagram Image Location: docs/careflow_uml_diagram.png]</i>", styles["CalloutTimes"]))
 
@@ -434,6 +435,7 @@ def build_pdf(filename: str, uml_image_path: str):
 
     # ==========================================
     # SECTION 6: VIVA PREPARATION & ETHICS
+    # (Signature block deleted per user request)
     # ==========================================
     story.append(Paragraph("6. Viva Defense Preparation & AI Usage Transparency", styles["SectionHeader"]))
     story.append(Paragraph("<b>6.1 Five-Minute Live Demo Protocol:</b>", styles["SubSectionHeader"]))
@@ -442,7 +444,7 @@ def build_pdf(filename: str, uml_image_path: str):
     story.append(Paragraph("3. <b>Interactive OpenAPI Docs:</b> Launch <code>uvicorn careflow.api.app:app --reload</code> and visit <code>http://127.0.0.1:8000/docs</code> to show interactive Swagger UI with live request execution.", styles["BulletTimes"]))
     story.append(Paragraph("4. <b>Git Evidence:</b> Run <code>git log --graph --oneline</code> to display feature branches, PR merges, and the resolved conflict in <code>billing_service.py</code>.", styles["BulletTimes"]))
 
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 8))
     story.append(Paragraph("<b>6.2 Ethical AI Tool Usage Transparency Declaration:</b>", styles["SubSectionHeader"]))
     story.append(Paragraph(
         "In strict compliance with the RUET CSE 3206 Sessional Guidelines (<i>'AI tools or online code may be used only if you can explain every part in the viva, and their use must be stated in the report. Git history must show your own contributions'</i>):",
@@ -453,18 +455,7 @@ def build_pdf(filename: str, uml_image_path: str):
         styles["BodyTimes"],
     ))
 
-    story.append(Spacer(1, 35))
-    sig_data = [
-        [Paragraph("____________________________________________<br/><b>Md. Rofaz Hasan Rafiu</b><br/>Student, 22 Series<br/>Department of CSE, RUET", styles["TableCellTimes"]),
-         Paragraph("____________________________________________<br/><b>Course Teacher / Sessional Examiner</b><br/>Department of Computer Science & Engineering<br/>Rajshahi University of Engineering & Technology", styles["TableCellTimes"])],
-    ]
-    sig_table = Table(sig_data, colWidths=[250, 250])
-    sig_table.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("TOPPADDING", (0, 0), (-1, -1), 0),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-    ]))
-    story.append(sig_table)
+    # Note: Signature block lines deleted per student instruction.
 
     # Build document
     doc.build(story, canvasmaker=NumberedCanvas)

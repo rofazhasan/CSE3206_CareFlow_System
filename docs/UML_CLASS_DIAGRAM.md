@@ -1,21 +1,27 @@
-# CareFlow System - UML Class Diagram & Design Pattern Architecture
+# CareFlow System - Comprehensive UML Class & Architecture Diagram
 **Course:** CSE 3206 Software Engineering Sessional | **Department of CSE, RUET**  
 **Author:** Md. Rofaz Hasan Rafiu (22 Series)
 
 ---
 
-## 1. Complete UML Class Diagram
+## 1. Visual Architecture Diagram
+The high-resolution visual UML diagram is available at:  
+👉 **[`careflow_uml_diagram.png`](careflow_uml_diagram.png)** (and embedded inside the formal PDF project report).
 
-The following Mermaid diagram visualizes the primary domain models, design patterns, services, and repository layers in CareFlow.
+---
+
+## 2. Mermaid Structural Class Diagram
 
 ```mermaid
 classDiagram
-    %% Core Domain Entities
+    %% ==========================================
+    %% 1. Domain Entities
+    %% ==========================================
     class User {
         +string user_id
         +string name
         +string email
-        +UserRole role
+        +string role
         +string password_hash
         +string phone
         +string created_at
@@ -31,7 +37,8 @@ classDiagram
         +string scheduled_time
         +string reason
         +float fee
-        +AppointmentStatus status
+        +string status
+        +string created_at
         +confirm() void
         +complete() void
         +cancel() void
@@ -45,10 +52,18 @@ classDiagram
         +float base_amount
         +float discount_amount
         +float tax_amount
-        +PaymentStatus status
+        +string status
         +string payment_reference
         +float total_payable
         +mark_as_paid(string) void
+        +to_dict() dict
+    }
+
+    class PrescriptionItem {
+        +string medicine_name
+        +string dosage
+        +string frequency
+        +int duration_days
         +to_dict() dict
     }
 
@@ -64,56 +79,62 @@ classDiagram
         +to_dict() dict
     }
 
-    %% Creational Pattern: Singleton
+    MedicalRecord *-- PrescriptionItem : contains
+    User "1" --> "0..*" Appointment : books/manages
+    Appointment "1" --> "1" Invoice : generates
+    Appointment "1" --> "0..1" MedicalRecord : results in
+
+    %% ==========================================
+    %% 2. Creational Patterns
+    %% ==========================================
     class DatabaseManager {
+        <<Singleton>>
         -_instance DatabaseManager
         -_lock Lock
-        +db_path string
+        +string db_name
+        +Connection connection
         +get_connection() Connection
-        +init_schema() void
+        +init_database() void
         +close() void
         +reset_instance() void
     }
 
-    %% Creational Pattern: Factory Method
     class INotificationChannel {
-        <<interface>>
+        <<Interface>>
         +send(recipient, subject, message) dict
     }
     class EmailNotificationChannel {
-        +string smtp_host
         +send(recipient, subject, message) dict
     }
     class SMSNotificationChannel {
-        +string sms_api_key
         +send(recipient, subject, message) dict
     }
     class WebhookNotificationChannel {
-        +string endpoint_url
         +send(recipient, subject, message) dict
     }
     class NotificationFactory {
-        -_registry dict
-        +register_channel(type, cls) void
-        +create_channel(type, kwargs) INotificationChannel
+        <<Factory Method>>
+        -_channels dict
+        +create_channel(string) INotificationChannel
+        +register_channel(string, class) void
     }
     INotificationChannel <|.. EmailNotificationChannel
     INotificationChannel <|.. SMSNotificationChannel
     INotificationChannel <|.. WebhookNotificationChannel
     NotificationFactory ..> INotificationChannel : creates
 
-    %% Structural Pattern: Adapter
+    %% ==========================================
+    %% 3. Structural Pattern: Adapter
+    %% ==========================================
     class IPaymentProcessor {
-        <<interface>>
+        <<Interface>>
         +process_payment(amount, reference_id, customer_info) PaymentResult
     }
     class BkashGateway {
-        +string merchant_wallet
         +execute_bKash_payment(msisdn, bdt_amount, token) dict
     }
     class StripeGateway {
-        +string api_key
-        +charge_customer_cents(amount_cents, currency, email, idem_key) dict
+        +charge_customer_cents(cents, currency, email, idem_key) dict
     }
     class BkashPaymentAdapter {
         -BkashGateway gateway
@@ -126,26 +147,26 @@ classDiagram
     }
     IPaymentProcessor <|.. BkashPaymentAdapter
     IPaymentProcessor <|.. StripePaymentAdapter
-    BkashPaymentAdapter --> BkashGateway : adapts
-    StripePaymentAdapter --> StripeGateway : adapts
+    BkashPaymentAdapter --> BkashGateway : wraps
+    StripePaymentAdapter --> StripeGateway : wraps
 
-    %% Behavioral Pattern: Observer
+    %% ==========================================
+    %% 4. Behavioral Pattern: Observer
+    %% ==========================================
     class IAppointmentObserver {
-        <<interface>>
+        <<Interface>>
         +update(event_type, appointment, metadata) void
     }
     class AppointmentSubject {
-        -_observers List~IAppointmentObserver~
+        -_observers List
         +attach(observer) void
         +detach(observer) void
         +notify(event_type, appointment, metadata) void
     }
     class EmailNotificationObserver {
-        +sent_emails List
         +update(event_type, appointment, metadata) void
     }
     class SMSNotificationObserver {
-        +sent_sms List
         +update(event_type, appointment, metadata) void
     }
     class AuditLogObserver {
@@ -157,9 +178,11 @@ classDiagram
     IAppointmentObserver <|.. AuditLogObserver
     AppointmentSubject o--> IAppointmentObserver : notifies
 
-    %% Behavioral Pattern: Strategy
+    %% ==========================================
+    %% 5. Behavioral Pattern: Strategy
+    %% ==========================================
     class IBillingStrategy {
-        <<interface>>
+        <<Interface>>
         +compute(base_amount) BillingCalculationResult
     }
     class StandardBillingStrategy {
@@ -179,9 +202,11 @@ classDiagram
     IBillingStrategy <|.. InsuranceCoverageStrategy
     IBillingStrategy <|.. EmergencyCareStrategy
 
-    %% Service Orchestration
+    %% ==========================================
+    %% 6. Service & Repository Coordination
+    %% ==========================================
     class AppointmentService {
-        -AppointmentRepository appointment_repo
+        -AppointmentRepository appt_repo
         -UserRepository user_repo
         -AppointmentSubject subject
         +book_appointment(...) Appointment
@@ -190,31 +215,44 @@ classDiagram
     }
     class BillingService {
         -BillingRepository billing_repo
-        -AppointmentRepository appointment_repo
+        -AppointmentRepository appt_repo
         -IPaymentProcessor payment_processor
-        +generate_invoice(appt_id, strategy, promo, notes) Invoice
+        +generate_invoice(...) Invoice
         +process_invoice_payment(...) PaymentResult
     }
 
+    AppointmentService --> AppointmentRepository : queries
     AppointmentService --> AppointmentSubject : triggers
-    AppointmentService --> Appointment : manages
-    BillingService --> IBillingStrategy : calculates fee via
-    BillingService --> IPaymentProcessor : executes charge via
-    BillingService --> Invoice : manages
-    AuditLogObserver --> DatabaseManager : persists audit log
+    BillingService --> BillingRepository : queries
+    BillingService --> IBillingStrategy : calculates via
+    BillingService --> IPaymentProcessor : executes via
+    AuditLogObserver --> DatabaseManager : records to audit_logs
 ```
 
 ---
 
-## 2. Design Patterns Evaluation Matrix
+## 3. Detailed Architectural Breakdown
 
-The project incorporates **5 patterns** across **Creational, Structural, and Behavioral** categories, significantly exceeding the syllabus baseline requirement of at least 3 patterns from 2 categories.
+### 3.1 Tier 1: Domain Entities
+- **`User`**: Manages personal profile data and secure credential verification using salted SHA-256 (`hash_password()`). Supports multiple roles (`PATIENT`, `DOCTOR`, `ADMIN`, `RECEPTIONIST`).
+- **`Appointment`**: Serves as the Aggregate Root for consultation requests. Implements state transition validation (`PENDING` → `CONFIRMED` → `COMPLETED` / `CANCELLED`), preventing illegal state mutations.
+- **`Invoice`**: Handles consultation billing records. Features a dynamic property `total_payable = base - discount + tax`.
+- **`MedicalRecord` & `PrescriptionItem`**: Captures doctor diagnostic notes and structured medication prescriptions.
 
-| Pattern | Category | Problem Solved in CareFlow | Rejected Alternative & Technical Reason |
-| :--- | :--- | :--- | :--- |
-| **Singleton** | Creational | Prevents multiple competing uncoordinated SQLite database connection handles across multi-threaded request contexts, eliminating file-lock corruption and redundant memory overhead. | **Global Module Connection Variable**: Lacks thread-safe double-checked synchronization, pollutes global scope, and prevents cleanly resetting the DB state between independent unit test runs. |
-| **Factory Method** | Creational | Decouples business logic from concrete communication channels (Email, SMS, Webhook), enabling runtime channel registration without modifying appointment code. | **Hardcoded Conditionals (`if-elif-else`)**: Violates Open-Closed Principle (OCP). Adding a new channel like WhatsApp requires editing core business methods, increasing regression risk. |
-| **Adapter** | Structural | Converts radically different third-party payment gateway interfaces (`BkashGateway` requiring BDT floats and phone strings vs. `StripeGateway` requiring integer cents and idempotency keys) into a single, unified `IPaymentProcessor` target interface. | **Direct Vendor Invocations in BillingService**: Severely couples clinic billing to third-party SDK parameters. Any vendor API update would force refactoring of internal invoice records and break unit testing. |
-| **Observer** | Behavioral | Decouples appointment lifecycle transitions (`BOOKED`, `CONFIRMED`, `CANCELLED`) from auxiliary side-effects (patient email, SMS alert, persistent SQLite audit logging), ensuring Single Responsibility Principle (SRP). | **Direct Method Calls inside Service Methods**: Chaining `send_email()`, `send_sms()`, and `insert_audit()` directly inside `book_appointment()` creates high coupling; failure in email dispatch would crash core booking. |
-| **Strategy** | Behavioral | Encapsulates divergent healthcare pricing rules (General 5% VAT, RUET Student 30% waiver, Insurance 80% co-pay, Emergency 25% surcharge) into interchangeable strategy objects selected dynamically at runtime. | **Nested Switch/If Statements in `calculate_total()`**: Violates OCP and leads to high cyclomatic complexity. Adding a Senior Citizen discount would require altering existing battle-tested billing logic. |
+### 3.2 Tier 2: Data Access Layer (Repositories)
+- **`DatabaseManager` (Singleton Pattern)**: Manages SQLite connection pooling with thread-safe `__new__` mutex locks, preventing database lock collisions.
+- **`AppointmentRepository`**: Implements slot collision checking via `is_doctor_slot_occupied()` to reject double-booking conflicts.
+- **`UserRepository`, `BillingRepository`, `MedicalRecordRepository`**: Encapsulate clean CRUD operations, decoupling raw SQL from business logic.
 
+### 3.3 Tier 3: Business Service Layer
+- **`AppointmentService`**: Orchestrates doctor availability validation and broadcasts state changes to `AppointmentSubject`.
+- **`BillingService`**: Injects `IBillingStrategy` to apply discounts (Standard, RUET Student 30%, Insurance 80%, Emergency) and calls `IPaymentProcessor` to settle charges.
+- **`AuthService`**: Enforces email uniqueness, role assignment, and JWT authentication.
+- **`MedicalRecordService`**: Links diagnoses to appointments, marking confirmed appointments as `COMPLETED`.
+
+### 3.4 Tier 4: Gang of Four Design Patterns
+1. **Singleton (Creational)**: `DatabaseManager` ensures a single shared database connection pool across all threads.
+2. **Factory Method (Creational)**: `NotificationFactory` constructs channel objects (`Email`, `SMS`, `Webhook`) based on string identifiers, enabling runtime registration of new channels.
+3. **Adapter (Structural)**: `BkashPaymentAdapter` and `StripePaymentAdapter` adapt incompatible third-party payment APIs into the clinic's unified `IPaymentProcessor`.
+4. **Observer (Behavioral)**: `AppointmentSubject` notifies registered observers (`EmailNotificationObserver`, `SMSNotificationObserver`, `AuditLogObserver`) without coupling the appointment booking code to communication or auditing details.
+5. **Strategy (Behavioral)**: `IBillingStrategy` encapsulates dynamic pricing algorithms, allowing runtime switching of healthcare subsidy policies without modifying the `Invoice` class.
